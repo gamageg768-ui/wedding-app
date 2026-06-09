@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Dancing+Script:wght@600&display=swap');
+
+:root {
+  --gold: #c9a96e;
+  --gold-light: #f0e4cc;
+  --rose: #e8b4b8;
+  --blush: #fdf0f0;
+  --deep: #2c1810;
+  --soft: #f9f5f0;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--soft);
+  color: var(--deep);
+}
+
+.font-playfair { font-family: 'Playfair Display', serif; }
+
+.btn-gold {
+  @apply px-4 py-2 rounded-lg font-medium text-white transition-all duration-200;
+  background: linear-gradient(135deg, #c9a96e, #a07840);
+}
+.btn-gold:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(201,169,110,0.4); }
+
+.btn-outline {
+  @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 border;
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.btn-outline:hover { background: var(--gold-light); }
+
+.card {
+  @apply bg-white rounded-2xl shadow-sm border p-6;
+  border-color: #f0e8de;
+}
+
+.badge-confirmed { @apply bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium; }
+.badge-declined  { @apply bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-medium; }
+.badge-pending   { @apply bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full font-medium; }
+
+.input-field {
+  @apply w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 transition-all;
+  border-color: #e5ddd4;
+}
+.input-field:focus { border-color: var(--gold); --tw-ring-color: rgba(201,169,110,0.2); }
+
+.invite-serif { font-family: 'Playfair Display', serif; }
+.invite-script { font-family: 'Dancing Script', cursive; }
+.invite-sans   { font-family: 'Inter', sans-serif; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f9f5f0; }
+::-webkit-scrollbar-thumb { background: #d4b896; border-radius: 3px; }

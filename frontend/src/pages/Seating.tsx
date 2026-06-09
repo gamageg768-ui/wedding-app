@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Plus, Save, Trash2, Users } from 'lucide-react'
+import { Save, Trash2, Users, Sparkles, Printer } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface Guest {
   id: number; name: string; rsvp_status: string; table_number: number
+  conflict_with: string; accessibility_needs: string
 }
-
-interface Table {
-  number: number; capacity: number; label: string
-}
+interface Table { number: number; capacity: number; label: string }
 
 export default function Seating() {
   const [guests, setGuests] = useState<Guest[]>([])
@@ -22,6 +20,7 @@ export default function Seating() {
   const [numTables, setNumTables] = useState(5)
   const [capacity, setCapacity] = useState(8)
   const [dragGuest, setDragGuest] = useState<Guest | null>(null)
+  const [assigning, setAssigning] = useState(false)
 
   const load = () => fetch('/api/guests/').then(r => r.json()).then(setGuests)
   useEffect(load, [])
@@ -61,6 +60,73 @@ export default function Seating() {
     if (dragGuest) { assignToTable(dragGuest.id, tableNum); setDragGuest(null) }
   }
 
+  const autoAssign = async () => {
+    setAssigning(true)
+    try {
+      const res = await fetch('/api/seating/auto-assign', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ num_tables: tables.length, capacity })
+      })
+      const data = await res.json()
+      await fetch('/api/seating/apply', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignments: data.assignments })
+      })
+      load()
+      toast.success(`Auto-assigned ${data.assignments.length} guests!${data.unassigned.length ? ` (${data.unassigned.length} couldn't be placed)` : ''}`)
+    } catch {
+      toast.error('Auto-assign failed')
+    }
+    setAssigning(false)
+  }
+
+  const clearAll = async () => {
+    if (!confirm('Clear all table assignments?')) return
+    for (const g of confirmed) {
+      if (g.table_number) {
+        await fetch(`/api/guests/${g.id}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...g, table_number: 0 })
+        })
+      }
+    }
+    load()
+    toast.success('All assignments cleared')
+  }
+
+  const printChart = () => {
+    const win = window.open('', '_blank')
+    if (!win) return
+    const tableRows = tables.map(table => {
+      const seated = confirmed.filter(g => g.table_number === table.number)
+      const guestList = seated.map(g => `<li style="padding:2px 0;font-size:12px">${g.name}${g.accessibility_needs ? ' *' : ''}</li>`).join('')
+      return `
+        <div style="break-inside:avoid;border:1px solid #e8d5b0;border-radius:8px;padding:12px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <strong style="font-family:serif;font-size:14px">${table.label}</strong>
+            <span style="font-size:12px;color:#9a7a5a">${seated.length}/${table.capacity}</span>
+          </div>
+          <ul style="list-style:none;padding:0;margin:0">${guestList || '<li style="color:#b09070;font-size:12px">Empty</li>'}</ul>
+        </div>`
+    }).join('')
+
+    win.document.write(`
+      <html><head><title>Seating Chart</title>
+      <style>body{font-family:sans-serif;padding:20px;max-width:900px;margin:0 auto}
+      .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+      @media print{body{padding:10px}}</style></head>
+      <body>
+        <h1 style="font-family:serif;text-align:center;margin-bottom:4px">Seating Chart</h1>
+        <p style="text-align:center;color:#9a7a5a;margin-bottom:20px;font-size:13px">
+          ${confirmed.length - unassigned.length} of ${confirmed.length} guests assigned
+          · * = accessibility needs
+        </p>
+        <div class="grid">${tableRows}</div>
+      </body></html>`)
+    win.document.close()
+    win.print()
+  }
+
   const guestsAtTable = (tableNum: number) => confirmed.filter(g => g.table_number === tableNum)
 
   return (
@@ -68,7 +134,14 @@ export default function Seating() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-playfair text-3xl text-[#2c1810]">Seating Chart</h1>
-          <p className="text-sm text-[#9a7a5a] mt-1">Drag and drop guests to assign tables</p>
+          <p className="text-sm text-[#9a7a5a] mt-1">Drag and drop guests or use AI auto-assign</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={printChart} className="btn-outline flex items-center gap-2 text-sm"><Printer size={14}/> Export PDF</button>
+          <button onClick={autoAssign} disabled={assigning}
+            className="btn-gold flex items-center gap-2 text-sm disabled:opacity-50">
+            <Sparkles size={14}/>{assigning ? 'Assigning...' : 'AI Auto-Assign'}
+          </button>
         </div>
       </div>
 
@@ -87,6 +160,7 @@ export default function Seating() {
         <button onClick={regenerateTables} className="btn-gold flex items-center gap-2 text-sm">
           <Save size={14}/> Apply
         </button>
+        <button onClick={clearAll} className="btn-outline text-sm text-red-500 border-red-200 hover:bg-red-50">Clear All</button>
         <div className="ml-auto text-sm text-[#9a7a5a]">
           <span className="font-semibold text-[#c9a96e]">{confirmed.length - unassigned.length}</span> / {confirmed.length} guests assigned
         </div>
@@ -102,7 +176,7 @@ export default function Seating() {
               <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">{unassigned.length}</span>
             </div>
             {unassigned.length === 0 && (
-              <p className="text-xs text-[#b09070] text-center mt-4">All confirmed guests assigned! 🎉</p>
+              <p className="text-xs text-[#b09070] text-center mt-4">All confirmed guests assigned!</p>
             )}
             <div className="space-y-1.5">
               {unassigned.map(g => (
@@ -113,7 +187,9 @@ export default function Seating() {
                   <span className="w-5 h-5 rounded-full bg-[#c9a96e] text-white text-[10px] flex items-center justify-center font-bold flex-shrink-0">
                     {g.name[0].toUpperCase()}
                   </span>
-                  <span className="text-[#4a3728] truncate">{g.name}</span>
+                  <span className="text-[#4a3728] truncate flex-1">{g.name}</span>
+                  {g.conflict_with && <span title={`Conflicts: ${g.conflict_with}`} className="text-[9px] text-red-400">⚡</span>}
+                  {g.accessibility_needs && <span title={g.accessibility_needs} className="text-[9px] text-blue-400">♿</span>}
                 </div>
               ))}
             </div>
@@ -137,7 +213,6 @@ export default function Seating() {
                       {seated.length}/{table.capacity}
                     </span>
                   </div>
-                  {/* Visual seats circle */}
                   <div className="flex flex-wrap gap-1 mb-2">
                     {Array.from({ length: table.capacity }).map((_, i) => {
                       const g = seated[i]
@@ -173,7 +248,7 @@ export default function Seating() {
       </div>
 
       <p className="text-xs text-[#b09070] mt-4 text-center">
-        💡 Drag guests from the unassigned list to a table. Click a seated guest name to remove them. Only confirmed guests are shown.
+        Drag guests from the unassigned list to a table. Click a seated guest to remove. AI auto-assign respects conflict tags and accessibility needs.
       </p>
     </div>
   )
