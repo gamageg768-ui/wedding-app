@@ -29,4 +29,3 @@ export async function getSessionFromRequest(
   return getIronSession<SessionData>(req, res, sessionOptions)
 }
 
-export const COUPLE_PIN = process.env.COUPLE_PIN || '1234'

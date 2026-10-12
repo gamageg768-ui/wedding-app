@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession, COUPLE_PIN } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
-  const { role, pin } = await req.json()
+  const { role } = await req.json()
 
-  if (role === 'couple') {
-    if (pin !== COUPLE_PIN) {
-      return NextResponse.json({ error: 'Invalid PIN' }, { status: 401 })
-    }
-  } else if (role !== 'guest') {
+  if (role !== 'couple' && role !== 'guest') {
     return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
   }
 
