@@ -1,39 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const HF_API = 'https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta'
-const HF_TOKEN = process.env.HF_TOKEN ?? ''
-
 export async function POST(req: NextRequest) {
   const { guests } = req.json ? await req.json() : { guests: [] }
+  const apiKey = process.env.GROQ_API_KEY
+  if (!apiKey) return NextResponse.json({ suggestions: [], error: 'AI not configured' })
 
   const guestList = (guests as { name: string; dietary: string; notes: string; group_name: string }[])
     .map((g) => `- ${g.name} (group: ${g.group_name}, dietary: ${g.dietary}, notes: ${g.notes || 'none'})`)
     .join('\n')
 
-  const prompt = `<|system|>
-You are a wedding seating expert. Analyze guest information to identify potential seating conflicts.
-</s>
-<|user|>
-Analyze these wedding guests and identify 3-5 potential seating conflicts based on their notes and groups:
-
-${guestList}
-
-Reply ONLY with a JSON array in this exact format, no other text:
-[{"guest1": "Name", "guest2": "Name", "reason": "brief reason"}]
-</s>
-<|assistant|>
-`
-
   try {
-    const res = await fetch(HF_API, {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${HF_TOKEN}` },
-      body: JSON.stringify({ inputs: prompt, parameters: { max_new_tokens: 400, temperature: 0.3, return_full_text: false } }),
-      signal: AbortSignal.timeout(60000),
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'openai/gpt-oss-20b',
+        messages: [
+          { role: 'system', content: 'You are a wedding seating expert. Analyze guest information to identify potential seating conflicts. Return only valid JSON, no markdown.' },
+          { role: 'user', content: `Analyze these wedding guests and identify 3-5 potential seating conflicts based on their notes and groups:\n\n${guestList}\n\nReply ONLY with a JSON array in this exact format:\n[{"guest1": "Name", "guest2": "Name", "reason": "brief reason"}]` },
+        ],
+        max_tokens: 400,
+        temperature: 0.3,
+      }),
+      signal: AbortSignal.timeout(30000),
     })
-    if (!res.ok) throw new Error(`HF API ${res.status}`)
-    const data = await res.json()
-    const text = ((Array.isArray(data) ? data[0]?.generated_text : data?.generated_text) ?? '').trim()
+    if (!res.ok) throw new Error(`Groq API ${res.status}`)
+    const data = await res.json() as { choices?: { message?: { content?: string } }[] }
+    const text = data.choices?.[0]?.message?.content?.trim() ?? ''
     const jsonMatch = text.match(/\[[\s\S]*\]/)
     const suggestions = jsonMatch ? JSON.parse(jsonMatch[0]) : []
     return NextResponse.json({ suggestions })

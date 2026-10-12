@@ -1,12 +1,55 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Users, CheckSquare, DollarSign, Store, Heart } from 'lucide-react'
+import { Users, CheckSquare, DollarSign, Store, Heart, Cloud, Sun, CloudRain } from 'lucide-react'
 
 interface GuestStats { total: number; confirmed: number; declined: number; pending: number; total_attending: number }
 interface PlannerStats { total: number; completed: number; remaining: number }
 interface BudgetSummary { total_estimated: number; total_actual: number; total_paid: number; remaining: number }
-interface Invitation { couple_names?: string; wedding_date?: string; venue?: string }
+interface Invitation { couple_names?: string; wedding_date?: string; venue?: string; venue_address?: string }
+interface WeatherData { available: boolean; location: string; temp_max?: number; temp_min?: number; rain_probability?: number; description?: string; code?: number; message?: string }
+
+function WeatherIcon({ code }: { code: number }) {
+  if (code === 0 || code === 1) return <Sun size={20} className="text-amber-400" />
+  if (code <= 3) return <Cloud size={20} className="text-gray-400" />
+  return <CloudRain size={20} className="text-blue-400" />
+}
+
+function WeatherWidget({ venue, date }: { venue: string; date: string }) {
+  const [weather, setWeather] = useState<WeatherData | null>(null)
+  const city = venue.split(',')[0].trim()
+
+  useEffect(() => {
+    if (!city || !date) return
+    fetch(`/api/weather?city=${encodeURIComponent(city)}&date=${date}`)
+      .then(r => r.json()).then(setWeather).catch(() => null)
+  }, [city, date])
+
+  if (!weather) return null
+  if (!weather.available) return (
+    <div className="card mt-4 flex items-center gap-3 py-3">
+      <Cloud size={20} className="text-[#d4c4b0]" />
+      <div>
+        <p className="text-xs font-medium text-[#2c1810]">Weather Forecast</p>
+        <p className="text-xs text-[#9a7a5a]">{weather.message || 'Available within 16 days of wedding'}</p>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="card mt-4 flex items-center gap-4">
+      <WeatherIcon code={weather.code ?? 0} />
+      <div className="flex-1">
+        <p className="text-xs font-medium text-[#2c1810]">Wedding Day Forecast · {weather.location}</p>
+        <p className="text-sm text-[#9a7a5a]">{weather.description} · {weather.temp_min}°–{weather.temp_max}°C</p>
+      </div>
+      <div className="text-right">
+        <p className="text-lg font-bold text-[#2c1810]">{weather.rain_probability}%</p>
+        <p className="text-xs text-[#9a7a5a]">rain chance</p>
+      </div>
+    </div>
+  )
+}
 
 function Countdown({ weddingDate }: { weddingDate: string }) {
   const diff = new Date(weddingDate).getTime() - Date.now()
@@ -52,13 +95,18 @@ export default function Dashboard() {
       </div>
 
       {invitation?.wedding_date ? (
-        <div className="card mb-6 flex items-center justify-between" style={{ background: 'linear-gradient(135deg, #fdf5eb, #fff8f0)', borderColor: '#e8d5b0' }}>
-          <div>
-            <p className="text-xs text-[#a07840] uppercase tracking-widest mb-1">Countdown to Your Big Day</p>
-            <Countdown weddingDate={invitation.wedding_date} />
-            {invitation.venue && <p className="text-sm text-[#9a7a5a] mt-2">📍 {invitation.venue}</p>}
+        <div className="mb-6">
+          <div className="card flex items-center justify-between" style={{ background: 'linear-gradient(135deg, #fdf5eb, #fff8f0)', borderColor: '#e8d5b0' }}>
+            <div>
+              <p className="text-xs text-[#a07840] uppercase tracking-widest mb-1">Countdown to Your Big Day</p>
+              <Countdown weddingDate={invitation.wedding_date} />
+              {invitation.venue && <p className="text-sm text-[#9a7a5a] mt-2">📍 {invitation.venue}</p>}
+            </div>
+            <Heart size={64} className="text-[#e8d5b0]" fill="#e8d5b0" />
           </div>
-          <Heart size={64} className="text-[#e8d5b0]" fill="#e8d5b0" />
+          {invitation.venue && (
+            <WeatherWidget venue={invitation.venue_address || invitation.venue} date={invitation.wedding_date} />
+          )}
         </div>
       ) : (
         <div className="card mb-6 text-center py-8 border-dashed border-2 border-[#e8d5b0]">

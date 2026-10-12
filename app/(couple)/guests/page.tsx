@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Users, Plus, Trash2, Pencil, X, Check, Download, Bell } from 'lucide-react'
+import { Users, Plus, Trash2, Pencil, X, Check, Download, Bell, Link2, Copy } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import toast from 'react-hot-toast'
 
 interface Guest { id: number; name: string; email: string; phone: string; group_name: string; rsvp_status: string; dietary: string; plus_one: number; plus_one_name: string; table_number: number | null; notes: string; conflict_with: string; accessibility_needs: string; address: string; nudge_count: number; last_nudged_at: string }
@@ -22,6 +23,13 @@ export default function Guests() {
   const [dietary, setDietary] = useState<{ has_menu: boolean; conflicts: { guest: string; dietary: string }[]; covered: { guest: string; dietary: string; options: string[] }[] } | null>(null)
   const [questions, setQuestions] = useState<{ id: number; question_text: string; field_type: string; answer_summary: { answer: string; count: number }[]; response_count: number }[]>([])
   const [newQ, setNewQ] = useState({ question_text: '', field_type: 'text' })
+  const [magicLink, setMagicLink] = useState<{ url: string; name: string } | null>(null)
+
+  const getMagicLink = async (id: number, name: string) => {
+    const res = await fetch(`/api/guests/${id}/magic-link`)
+    const data = await res.json() as { url: string }
+    setMagicLink({ url: data.url, name })
+  }
 
   const load = () => { fetch('/api/guests').then(r => r.json()).then(setGuests); fetch('/api/guests/stats').then(r => r.json()).then(setStats) }
   useEffect(() => { load() }, [])
@@ -172,6 +180,7 @@ export default function Guests() {
                     <td className="py-2 px-3 text-xs text-[#9a7a5a]">{g.table_number || '—'}</td>
                     <td className="py-2 px-3">
                       <div className="flex gap-1">
+                        <button onClick={() => getMagicLink(g.id, g.name)} className="p-1 rounded text-[#c9a96e] hover:bg-[#fdf5eb]" title="Magic RSVP link"><Link2 size={13} /></button>
                         <button onClick={() => { const { id, ...rest } = g; setForm(rest); setEditing(g.id); setShowForm(true) }} className="p-1 rounded text-[#9a7a5a] hover:bg-[#fdf5eb]"><Pencil size={13} /></button>
                         <button onClick={() => del(g.id)} className="p-1 rounded text-red-400 hover:bg-red-50"><Trash2 size={13} /></button>
                       </div>
@@ -258,6 +267,32 @@ export default function Guests() {
               ))}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Magic Link Modal */}
+      {magicLink && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setMagicLink(null)}>
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-playfair text-lg text-[#2c1810]">Magic RSVP Link</h3>
+              <button onClick={() => setMagicLink(null)} className="text-[#9a7a5a] hover:text-[#2c1810]"><X size={18} /></button>
+            </div>
+            <p className="text-sm text-[#9a7a5a] mb-4">Personal link for <span className="font-medium text-[#2c1810]">{magicLink.name}</span> — no name search needed.</p>
+            <div className="flex justify-center mb-4">
+              <QRCodeSVG value={magicLink.url} size={160} />
+            </div>
+            <div className="flex items-center gap-2 bg-[#f9f5f0] rounded-xl px-3 py-2 mb-4">
+              <span className="text-xs text-[#7a6652] flex-1 truncate font-mono">{magicLink.url}</span>
+              <button
+                onClick={() => { navigator.clipboard.writeText(magicLink.url); toast.success('Copied!') }}
+                className="text-[#c9a96e] hover:text-[#a07840] shrink-0"
+              >
+                <Copy size={14} />
+              </button>
+            </div>
+            <p className="text-xs text-[#9a7a5a] text-center">Share this link with the guest directly — via email, WhatsApp, or print the QR code.</p>
+          </div>
         </div>
       )}
     </div>

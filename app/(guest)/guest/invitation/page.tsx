@@ -44,7 +44,7 @@ export default function GuestInvitation() {
 
   const submitRSVP = async () => {
     if (!guest) return
-    await fetch('/api/guests/rsvp/token', {
+    await fetch('/api/guests/rsvp/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: guest.id, rsvp_status: rsvpStatus, dietary }),

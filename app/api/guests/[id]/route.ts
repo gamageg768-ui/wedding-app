@@ -16,6 +16,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   return NextResponse.json({ message: 'Guest updated' })
 }
 
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const data = await req.json()
+  if (data.relationship_tag !== undefined) {
+    await dbRun('UPDATE guests SET relationship_tag=? WHERE id=?', [data.relationship_tag, Number(id)])
+  }
+  return NextResponse.json({ ok: true })
+}
+
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   await dbRun('DELETE FROM rsvp_answers WHERE guest_id=?', [Number(id)])

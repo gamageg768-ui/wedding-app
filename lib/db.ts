@@ -312,6 +312,88 @@ async function doInit(): Promise<void> {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )`, args: []
     },
+    {
+      sql: `CREATE TABLE IF NOT EXISTS announcements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        target_group TEXT DEFAULT 'all',
+        sent_at TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )`, args: []
+    },
+    {
+      sql: `CREATE TABLE IF NOT EXISTS welcome_book_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category TEXT DEFAULT 'restaurant',
+        title TEXT NOT NULL,
+        description TEXT,
+        address TEXT,
+        url TEXT,
+        sort_order INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )`, args: []
+    },
+    {
+      sql: `CREATE TABLE IF NOT EXISTS honeymoon_fund (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL DEFAULT 'Honeymoon Fund',
+        description TEXT,
+        goal_amount REAL DEFAULT 5000,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )`, args: []
+    },
+    {
+      sql: `CREATE TABLE IF NOT EXISTS honeymoon_contributions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        contributor_name TEXT NOT NULL,
+        amount REAL NOT NULL,
+        message TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )`, args: []
+    },
+    {
+      sql: `CREATE TABLE IF NOT EXISTS ceremony_sections (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT,
+        duration_minutes INTEGER DEFAULT 5,
+        sort_order INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )`, args: []
+    },
+    {
+      sql: `CREATE TABLE IF NOT EXISTS mood_board_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category TEXT DEFAULT 'decor',
+        blob_url TEXT NOT NULL,
+        caption TEXT,
+        sort_order INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )`, args: []
+    },
+    {
+      sql: `CREATE TABLE IF NOT EXISTS vendor_reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        vendor_id INTEGER NOT NULL,
+        rating INTEGER DEFAULT 5,
+        review_text TEXT,
+        recommend INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )`, args: []
+    },
+    {
+      sql: `CREATE TABLE IF NOT EXISTS thank_you_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        guest_id INTEGER,
+        guest_name TEXT NOT NULL,
+        gift_description TEXT,
+        ai_message TEXT,
+        sent INTEGER DEFAULT 0,
+        sent_at TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )`, args: []
+    },
   ], 'write')
 
   // Migrate existing tables: add new columns if they don't exist
@@ -324,6 +406,8 @@ async function doInit(): Promise<void> {
     'ALTER TABLE invitation ADD COLUMN show_timeline INTEGER DEFAULT 1',
     'ALTER TABLE invitation ADD COLUMN show_accommodation INTEGER DEFAULT 1',
     'ALTER TABLE invitation ADD COLUMN story TEXT',
+    'ALTER TABLE guests ADD COLUMN rsvp_token TEXT',
+    'ALTER TABLE guests ADD COLUMN relationship_tag TEXT DEFAULT \'\'',
   ]
   for (const sql of migrations) {
     try { await db.execute(sql) } catch { /* column already exists */ }

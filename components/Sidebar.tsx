@@ -5,6 +5,8 @@ import {
   LayoutDashboard, Mail, Users, CheckSquare, DollarSign, Store,
   Grid3X3, Heart, Clock, Zap, Vote, Hotel, BarChart2, LogOut,
   QrCode, CalendarDays, Gift, Bus, Mic, Camera, Globe,
+  TrendingUp, Megaphone, BookOpen, Star, Scroll, Image,
+  Network, Sparkles, CalendarCheck, HeartHandshake,
 } from 'lucide-react'
 
 const planningItems = [
@@ -21,6 +23,8 @@ const dayItems = [
   { to: '/day-of', icon: Zap, label: 'Day-Of' },
   { to: '/checkin', icon: QrCode, label: 'Check-In' },
   { to: '/events', icon: CalendarDays, label: 'Events' },
+  { to: '/ceremony', icon: Scroll, label: 'Ceremony Script' },
+  { to: '/payment-calendar', icon: CalendarCheck, label: 'Payment Calendar' },
 ]
 const extrasItems = [
   { to: '/registry', icon: Gift, label: 'Registry' },
@@ -28,8 +32,16 @@ const extrasItems = [
   { to: '/accommodation', icon: Hotel, label: 'Accommodation' },
   { to: '/speeches', icon: Mic, label: 'Speeches' },
   { to: '/photos', icon: Camera, label: 'Photos' },
+  { to: '/honeymoon', icon: HeartHandshake, label: 'Honeymoon Fund' },
+  { to: '/announcements', icon: Megaphone, label: 'Announcements' },
+  { to: '/welcome-book', icon: BookOpen, label: 'Welcome Book' },
+  { to: '/mood-board', icon: Image, label: 'Mood Board' },
+  { to: '/thank-you', icon: Sparkles, label: 'Thank You Cards' },
 ]
 const toolItems = [
+  { to: '/analytics', icon: TrendingUp, label: 'Analytics' },
+  { to: '/guest-map', icon: Network, label: 'Guest Map' },
+  { to: '/vendor-reviews', icon: Star, label: 'Vendor Reviews' },
   { to: '/decisions', icon: Vote, label: 'Decisions' },
   { to: '/public-page', icon: Globe, label: 'Public Page' },
   { to: '/report', icon: BarChart2, label: 'Post-Wedding' },

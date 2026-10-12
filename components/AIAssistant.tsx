@@ -26,7 +26,7 @@ export default function AIAssistant() {
       const data = await res.json()
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Connection error. Please ensure Ollama is running.' }])
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Connection error. Please try again.' }])
     }
     setLoading(false)
   }
@@ -45,7 +45,7 @@ export default function AIAssistant() {
             <Sparkles size={16} className="text-[#c9a96e]" />
             <div>
               <p className="text-sm font-semibold text-[#2c1810]">AI Wedding Assistant</p>
-              <p className="text-[10px] text-[#a07840]">Powered by Ollama · llama3</p>
+              <p className="text-[10px] text-[#a07840]">Powered by Groq · Llama 3</p>
             </div>
           </div>
 

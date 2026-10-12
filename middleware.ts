@@ -10,7 +10,9 @@ const sessionOptions = {
 
 const COUPLE_PATHS = ['/dashboard', '/invitation', '/guests', '/planner', '/budget', '/vendors',
   '/seating', '/timeline', '/day-of', '/decisions', '/accommodation', '/report',
-  '/checkin', '/events', '/registry', '/transport', '/speeches', '/photos', '/public-page']
+  '/checkin', '/events', '/registry', '/transport', '/speeches', '/photos', '/public-page',
+  '/analytics', '/announcements', '/welcome-book', '/honeymoon', '/ceremony', '/mood-board',
+  '/vendor-reviews', '/thank-you', '/payment-calendar', '/guest-map']
 const GUEST_PATHS = ['/guest']
 
 export async function middleware(req: NextRequest) {
